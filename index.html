@@ -1927,10 +1927,10 @@ function renderAnalytics() {
   // Top/bottom performers
   const top3=sorted.slice(0,3), bot3=sorted.slice(-3).reverse().filter(p=>p!==sorted[0]);
   $('an-top').innerHTML=top3.length?top3.map(p=>`
-    <div class="prow"><span class="pk">${p.sym}</span><span class="pv g">${fU(p.profit)}</span></div>`).join('')
+    <div class="prow" style="justify-content:center;gap:16px;padding:10px 16px"><span class="pk" style="text-align:center">${p.sym}</span><span class="pv g" style="text-align:center">${fU(p.profit)}</span></div>`).join('')
     :`<div class="empty"><div class="empty-icon">🏆</div>No closed trades yet.</div>`;
   $('an-bottom').innerHTML=bot3.length?bot3.map(p=>`
-    <div class="prow"><span class="pk">${p.sym}</span><span class="pv r">${fU(p.profit)}</span></div>`).join('')
+    <div class="prow" style="justify-content:center;gap:16px;padding:10px 16px"><span class="pk" style="text-align:center">${p.sym}</span><span class="pv r" style="text-align:center">${fU(p.profit)}</span></div>`).join('')
     :`<div class="empty"><div class="empty-icon">📉</div>No closed trades yet.</div>`;
 
   // Allocation bars
