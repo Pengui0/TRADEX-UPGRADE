@@ -28,44 +28,43 @@ CORS(app, resources={r"/api/*": {"origins": "*"}},
 
 # ── Stock symbol map: TradeX ID → Yahoo Finance ticker ──────────────────────
 SYMBOLS = {
-    'aapl':       'AAPL',
-    'msft':       'MSFT',
-    'nvda':       'NVDA',
-    'googl':      'GOOGL',
-    'meta':       'META',
-    'tsla':       'TSLA',
-    'amzn':       'AMZN',
-    'nflx':       'NFLX',
-    'amd':        'AMD',
-    'intc':       'INTC',
-    'jpm':        'JPM',
-    'bac':        'BAC',
-    'gs':         'GS',
-    'v':          'V',
-    'ma':         'MA',
-    'jnj':        'JNJ',
-    'pfe':        'PFE',
-    'xom':        'XOM',
-    'wmt':        'WMT',
-    'ko':         'KO',
-    'tsm':        'TSM',
-    'baba':       'BABA',
-    'toyota':     'TM',
-    # Indian stocks — priced in INR on NSE, we convert to USD
-    'reliance':   'RELIANCE.NS',
-    'tcs':        'TCS.NS',
-    'infy':       'INFY.NS',
-    'hdfcbank':   'HDFCBANK.NS',
-    'icicibank':  'ICICIBANK.NS',
-    'sbi':        'SBIN.NS',
-    'wipro':      'WIPRO.NS',
-    'tatamotors': 'TATAMOTORS.BO',  # BSE works when NSE fails
+    # US Stocks
+    'aapl':'AAPL','msft':'MSFT','nvda':'NVDA','googl':'GOOGL','meta':'META',
+    'tsla':'TSLA','amzn':'AMZN','nflx':'NFLX','amd':'AMD','intc':'INTC',
+    'jpm':'JPM','bac':'BAC','gs':'GS','v':'V','ma':'MA','jnj':'JNJ',
+    'pfe':'PFE','xom':'XOM','wmt':'WMT','ko':'KO',
+    'orcl':'ORCL','crm':'CRM','adbe':'ADBE','qcom':'QCOM','avgo':'AVGO',
+    'mu':'MU','uber':'UBER','pypl':'PYPL','dis':'DIS','ba':'BA',
+    'cat':'CAT','mcd':'MCD','nke':'NKE','cvx':'CVX','abbv':'ABBV',
+    'mrk':'MRK','amgn':'AMGN','cost':'COST','spy':'SPY',
+    # International
+    'tsm':'TSM','baba':'BABA','toyota':'TM',
+    'hsba':'HSBC','shel':'SHEL','ulvr':'UL',
+    'sap':'SAP','asml':'ASML','lvmh':'LVMUY','siegy':'SIEGY',
+    'samsung':'SSNLF','sony':'SONY','bidu':'BIDU','jd':'JD',
+    'se':'SE','grab':'GRAB','rio':'RIO','bhp':'BHP',
+    'amat':'AMAT','lmt':'LMT','sbux':'SBUX','brkb':'BRK-B',
+    'crwd':'CRWD','snow':'SNOW','pltr':'PLTR','hood':'HOOD',
+    'coin':'COIN','rivn':'RIVN','nvo':'NVO','arm':'ARM','shop':'SHOP',
+    # More Indian
+    'drreddy':'DRREDDY.NS','divislab':'DIVISLAB.NS','hindunilvr':'HINDUNILVR.NS',
+    'bajajfinsv':'BAJAJFINSV.NS','techm':'TECHM.NS',
+    # Indian stocks — priced in INR, we convert to USD
+    'reliance':'RELIANCE.NS','tcs':'TCS.NS','infy':'INFY.NS',
+    'hdfcbank':'HDFCBANK.NS','icicibank':'ICICIBANK.NS','sbi':'SBIN.NS',
+    'wipro':'WIPRO.NS','tatamotors':'TATAMOTORS.BO',
+    'bajfinance':'BAJFINANCE.NS','hcltech':'HCLTECH.NS','axisbank':'AXISBANK.NS',
+    'kotakbank':'KOTAKBANK.NS','lt':'LT.NS','maruti':'MARUTI.NS',
+    'sunpharma':'SUNPHARMA.NS','titan':'TITAN.NS','asianpaint':'ASIANPAINT.NS',
+    'ultracemco':'ULTRACEMCO.NS','adaniports':'ADANIPORTS.NS','ntpc':'NTPC.NS',
+    'ongc':'ONGC.NS','powergrid':'POWERGRID.NS','nestleindia':'NESTLEIND.NS',
 }
 
-# These IDs are priced in INR and need USD conversion
 NSE_IDS = {
-    'reliance', 'tcs', 'infy', 'hdfcbank',
-    'icicibank', 'sbi', 'wipro', 'tatamotors',
+    'reliance','tcs','infy','hdfcbank','icicibank','sbi','wipro','tatamotors',
+    'bajfinance','hcltech','axisbank','kotakbank','lt','maruti','sunpharma',
+    'titan','asianpaint','ultracemco','adaniports','ntpc','ongc','powergrid','nestleindia',
+    'drreddy','divislab','hindunilvr','bajajfinsv','techm',
 }
 
 # ── Shared state (thread-safe) ───────────────────────────────────────────────
