@@ -41,7 +41,8 @@ SYMBOLS = {
     'tsm':'TSM','baba':'BABA','toyota':'TM',
     'hsba':'HSBC','shel':'SHEL','ulvr':'UL',
     'sap':'SAP','asml':'ASML','lvmh':'LVMUY','siegy':'SIEGY',
-    'samsung':'SSNLF','sony':'SONY','bidu':'BIDU','jd':'JD',
+    'samsung':'005930.KS',  # KRX proper ticker — replaces broken SSNLF OTC
+    'sony':'SONY','bidu':'BIDU','jd':'JD',
     'se':'SE','grab':'GRAB','rio':'RIO','bhp':'BHP',
     'amat':'AMAT','lmt':'LMT','sbux':'SBUX','brkb':'BRK-B',
     'crwd':'CRWD','snow':'SNOW','pltr':'PLTR','hood':'HOOD',
@@ -81,6 +82,14 @@ def get_usd_inr() -> float:
     except Exception:
         return 83.5
 
+def get_usd_krw() -> float:
+    """Fetch live USD/KRW rate for Samsung; falls back to 1340."""
+    try:
+        rate = yf.Ticker('KRW=X').fast_info.last_price
+        return float(rate) if rate and float(rate) > 0 else 1340.0
+    except Exception:
+        return 1340.0
+
 
 def safe_float(val, fallback=0.0) -> float:
     try:
@@ -96,10 +105,10 @@ def fetch_all() -> None:
 
     print("[TradeX] Starting fetch_all...")
     inr_rate = get_usd_inr()
-    print(f"[TradeX] USD/INR rate: {inr_rate:.2f}")
+    krw_rate = get_usd_krw()
+    print(f"[TradeX] USD/INR rate: {inr_rate:.2f}, USD/KRW rate: {krw_rate:.2f}")
 
     result = {}
-    # Fetch individually instead of batch — more reliable on cloud
     for app_id, yf_sym in SYMBOLS.items():
         try:
             ticker = yf.Ticker(yf_sym)
@@ -112,8 +121,14 @@ def fetch_all() -> None:
             if p_raw <= 0:
                 print(f"[TradeX] {yf_sym}: price=0, skipping")
                 continue
-            conv = inr_rate if app_id in NSE_IDS else 1.0
-            chg  = ((p_raw - pc_raw) / pc_raw * 100) if pc_raw > 0 else 0.0
+            # Convert to USD based on currency
+            if app_id in NSE_IDS:
+                conv = inr_rate      # INR → USD
+            elif app_id == 'samsung':
+                conv = krw_rate      # KRW → USD
+            else:
+                conv = 1.0           # Already USD
+            chg = ((p_raw - pc_raw) / pc_raw * 100) if pc_raw > 0 else 0.0
             result[app_id] = {
                 'p':  round(p_raw  / conv, 4),
                 'c':  round(chg,           3),
@@ -121,7 +136,7 @@ def fetch_all() -> None:
                 'lo': round(lo_raw / conv, 4),
                 'mc': round(mc_raw / conv, 0),
             }
-            print(f"[TradeX] {yf_sym}: ${p_raw:.2f}")
+            print(f"[TradeX] {yf_sym}: {p_raw:.2f} → ${p_raw/conv:.2f}")
         except Exception as e:
             print(f"[TradeX] {yf_sym} FAILED: {e}")
 
