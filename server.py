@@ -1,17 +1,4 @@
-"""
-TradeX Price Server — yfinance real-time precision
-====================================================
-Run:
-    pip install flask yfinance flask-cors && python server.py
 
-Then open http://localhost:5000 (serves index.html + /api/prices)
-
-API endpoints:
-  GET /api/prices   → { prices: {id: {p, c, hi, lo, mc}}, age: int, ok: bool }
-  GET /api/assets   → { stocks: [...], crypto: [...] }  (metadata only, no user data)
-  GET /             → serves index.html
-  GET /<path>       → serves static files
-"""
 
 from flask import Flask, jsonify, send_from_directory
 from flask_cors import CORS
@@ -21,14 +8,11 @@ import time
 import os
 
 app = Flask(__name__, static_folder='.')
-# Allow ALL origins including file:// so the HTML works
-# whether opened directly or via the server
+
 CORS(app, resources={r"/api/*": {"origins": "*"}},
      supports_credentials=False)
 
-# ── Stock symbol map: TradeX ID → Yahoo Finance ticker ──────────────────────
 SYMBOLS = {
-    # US Stocks
     'aapl':'AAPL','msft':'MSFT','nvda':'NVDA','googl':'GOOGL','meta':'META',
     'tsla':'TSLA','amzn':'AMZN','nflx':'NFLX','amd':'AMD','intc':'INTC',
     'jpm':'JPM','bac':'BAC','gs':'GS','v':'V','ma':'MA','jnj':'JNJ',
@@ -47,10 +31,8 @@ SYMBOLS = {
     'amat':'AMAT','lmt':'LMT','sbux':'SBUX','brkb':'BRK-B',
     'crwd':'CRWD','snow':'SNOW','pltr':'PLTR','hood':'HOOD',
     'coin':'COIN','rivn':'RIVN','nvo':'NVO','arm':'ARM','shop':'SHOP',
-    # More Indian
     'drreddy':'DRREDDY.NS','divislab':'DIVISLAB.NS','hindunilvr':'HINDUNILVR.NS',
     'bajajfinsv':'BAJAJFINSV.NS','techm':'TECHM.NS',
-    # Indian stocks — priced in INR, we convert to USD
     'reliance':'RELIANCE.NS','tcs':'TCS.NS','infy':'INFY.NS',
     'hdfcbank':'HDFCBANK.NS','icicibank':'ICICIBANK.NS','sbi':'SBIN.NS',
     'wipro':'WIPRO.NS','tatamotors':'TATAMOTORS.BO',
@@ -68,15 +50,12 @@ NSE_IDS = {
     'drreddy','divislab','hindunilvr','bajajfinsv','techm',
 }
 
-# ── Shared state (thread-safe) ───────────────────────────────────────────────
-_cache: dict = {}          # {app_id: {p, c, hi, lo, mc}}
-_price_ts: dict = {}       # {app_id: unix timestamp of last successful price fetch}
-_last_fetch: float = 0     # unix timestamp of last successful fetch
+_cache: dict = {}          
+_price_ts: dict = {}     
+_last_fetch: float = 0
 _lock = threading.Lock()
 
-# ── Helpers ──────────────────────────────────────────────────────────────────
 def get_usd_inr() -> float:
-    """Fetch live USD/INR rate; falls back to 83.5 if unavailable."""
     try:
         rate = yf.Ticker('USDINR=X').fast_info.last_price
         return float(rate) if rate and float(rate) > 0 else 83.5
@@ -84,7 +63,7 @@ def get_usd_inr() -> float:
         return 83.5
 
 def get_usd_krw() -> float:
-    """Fetch live USD/KRW rate for Samsung; falls back to 1340."""
+   
     try:
         rate = yf.Ticker('KRW=X').fast_info.last_price
         return float(rate) if rate and float(rate) > 0 else 1340.0
@@ -101,7 +80,6 @@ def safe_float(val, fallback=0.0) -> float:
 
 
 def fetch_all() -> None:
-    """Fetch all stock prices via yfinance and update _cache."""
     global _last_fetch
 
     print("[TradeX] Starting fetch_all...")
@@ -122,7 +100,6 @@ def fetch_all() -> None:
             if p_raw <= 0:
                 print(f"[TradeX] {yf_sym}: price=0, skipping")
                 continue
-            # Convert to USD based on currency
             if app_id in NSE_IDS:
                 conv = inr_rate      # INR → USD
             elif app_id == 'samsung':
@@ -161,7 +138,6 @@ def price_loop() -> None:
         time.sleep(30)
 
 
-# ── Asset metadata (sent to client once; no user data here) ──────────────────
 ASSET_META = {
     'stocks': [
         {'id':'aapl',       'name':'Apple Inc.',       'sym':'AAPL',       'col':'#a8b2c1', 'bg':'rgba(168,178,193,.18)', 'sector':'Tech',    'region':'🇺🇸', 'exch':'NASDAQ'},
@@ -216,14 +192,10 @@ ASSET_META = {
 }
 
 
-# ── Flask routes ──────────────────────────────────────────────────────────────
 
 @app.route('/api/prices')
 def api_prices():
-    """
-    Returns real-time stock prices from yfinance.
-    Response: { prices: {id: {p, c, hi, lo, mc}}, ts: {id: unix_ts}, age: seconds_since_fetch, ok: bool }
-    """
+
     now = time.time()
     with _lock:
         data  = dict(_cache)
@@ -235,7 +207,6 @@ def api_prices():
 
 @app.route('/api/assets')
 def api_assets():
-    """Returns asset metadata (colours, symbols, sectors) — no prices, no user data."""
     return jsonify(ASSET_META)
 
 
@@ -246,15 +217,13 @@ def serve_static(filename='index.html'):
     return send_from_directory('.', filename)
 
 
-# ── Startup ───────────────────────────────────────────────────────────────────
-# ── Auto-start: fetch prices immediately on import (works with gunicorn) ──────
+
 print("[TradeX] Fetching initial prices on startup...")
 try:
     fetch_all()
 except Exception as e:
     print(f"[TradeX] Initial fetch error: {e}")
 
-# Then keep refreshing in background every 30s
 _bg_thread = threading.Thread(target=price_loop, daemon=True)
 _bg_thread.start()
 print("[TradeX] Background price fetch started.")
