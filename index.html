@@ -791,7 +791,7 @@ input,select,button { font-family:var(--sans); }
       <!-- Limit/SL/TP price input -->
       <div id="limit-row" style="display:none;margin-bottom:6px">
         <div class="flabel" id="limit-label">Limit Price (USD)</div>
-        <div class="finp-wrap"><input class="finp" type="number" id="t-limit" placeholder="0.00" min="0" oninput="syncLimitHint()"><span class="finp-unit">USD</span></div>
+        <div class="finp-wrap"><input class="finp" type="number" id="t-limit" placeholder="Target price in USD" min="0" oninput="syncLimitHint()"><span class="finp-unit">USD</span></div>
         <div class="inr-hint" id="limit-hint"></div>
       </div>
       <div class="holding-strip" id="holdstrip">Holding <span id="hs-qty" style="font-weight:700;color:var(--text)">0</span> — Worth <span id="hs-usd" style="font-family:var(--mono);color:var(--green)">$0</span> <span id="hs-inr" style="font-family:var(--mono);color:var(--text2)"></span></div>
@@ -1479,7 +1479,16 @@ function setOrderType(t) {
 
 function syncLimitHint() {
   const v = parseFloat($('t-limit').value)||0;
-  $('limit-hint').textContent = v>0 ? '≈ '+fINR(v) : '';
+  if(!v) { $('limit-hint').textContent=''; return; }
+  const pr = prices[selId];
+  let hint = '≈ '+fINR(v);
+  if(pr && pr.p) {
+    const diff = ((v - pr.p)/pr.p*100).toFixed(2);
+    const sign = diff>=0?'+':'';
+    const col = orderType==='sl'?(v<pr.p?'var(--green)':'var(--red)'):(v>pr.p?'var(--green)':'var(--red)');
+    hint += ` <span style="color:${col};font-weight:600">${sign}${diff}% from current ${fU(pr.p)}</span>`;
+  }
+  $('limit-hint').innerHTML = hint;
 }
 
 function getPendingOrders() {
@@ -1496,11 +1505,13 @@ function checkPendingOrders() {
     const pr = prices[o.id]; if(!pr) return true;
     let hit = false;
     if(o.orderType==='limit') hit = o.mode==='buy' ? pr.p<=o.limitPrice : pr.p>=o.limitPrice;
-    if(o.orderType==='sl')    hit = pr.p<=o.limitPrice;
-    if(o.orderType==='tp')    hit = pr.p>=o.limitPrice;
+    if(o.orderType==='sl')    hit = pr.p<=o.limitPrice; // sell when price drops to/below SL
+    if(o.orderType==='tp')    hit = pr.p>=o.limitPrice; // sell when price rises to/above TP
     if(!hit) return true;
+
     const a=MAP[o.id]; if(!a) return false;
     const wallet=isCrypto(o.id)?'ccash':'scash';
+
     if(o.mode==='buy') {
       if(o.usd>S[wallet]){toast('⚠️ Order Failed',`Insufficient funds for ${a.sym}`,'error');return false;}
       const qty=o.usd/pr.p;
@@ -1510,13 +1521,16 @@ function checkPendingOrders() {
       S.orders.unshift({id:o.id,name:a.name,sym:a.sym,type:'buy',price:pr.p,qty,total:o.usd,time:Date.now(),orderType:o.orderType});
       toast('✅ '+o.orderType.toUpperCase()+' Triggered',`Bought ${a.sym} @ ${fU(pr.p)}`,'success');
     } else {
-      const h=S.h[o.id]; if(!h||h.qty<1e-8) return false;
-      const qty=Math.min(o.qty||Infinity,h.qty),total=qty*pr.p;
+      // SELL — use stored qty (actual shares to sell)
+      const h=S.h[o.id];
+      if(!h||h.qty<1e-8){toast('⚠️ '+o.orderType.toUpperCase()+' Failed',`No ${a.sym} position`,'error');return false;}
+      const qty=Math.min(o.qty, h.qty); // never sell more than held
+      const total=qty*pr.p;
       S.realisedPnl=(S.realisedPnl||0)+(total-h.avgBuy*qty);
       h.qty-=qty; S[wallet]+=total;
       if(h.qty<1e-8) delete S.h[o.id];
       S.orders.unshift({id:o.id,name:a.name,sym:a.sym,type:'sell',price:pr.p,qty,total,time:Date.now(),orderType:o.orderType});
-      toast('✅ '+o.orderType.toUpperCase()+' Triggered',`Sold ${a.sym} @ ${fU(pr.p)}`,'success');
+      toast('✅ '+o.orderType.toUpperCase()+' Triggered',`Sold ${a.sym} @ ${fU(pr.p)} · ${fU(total)}`,'success');
     }
     dbSave(); refreshAll(); triggered=true; return false;
   });
@@ -1655,21 +1669,35 @@ function updateSum(usd,qty,pr){
 function execTrade(){
   const usd=parseFloat($('t-usd').value)||0,pr=prices[selId],a=MAP[selId];
   if(!pr||!a){toast('Select an asset first','','warn');return;}
-  if(!usd||usd<=0){toast('Enter an amount','','warn');return;}
+  // Allow empty amount for SL/TP/Limit SELL (means sell entire position)
+  const isSellPending = orderType !== 'market' && mode === 'sell';
+  if((!usd||usd<=0) && !isSellPending){toast('Enter an amount','','warn');return;}
   const wallet=isCrypto(selId)?'ccash':'scash';
 
   // ── LIMIT / STOP LOSS / TAKE PROFIT ──
   if(orderType !== 'market') {
     const limitPrice = parseFloat($('t-limit').value)||0;
-    if(!limitPrice||limitPrice<=0){toast('Enter a '+orderType+' price','','warn');return;}
-    if(mode==='buy'&&usd>S[wallet]){toast('Insufficient funds',`${fU(S[wallet])} available`,'error');return;}
-    if(mode==='sell'){const h=S.h[selId];if(!h||h.qty<1e-8){toast('No position',`You don't hold ${a.sym}`,'error');return;}}
-    const qty=usd/limitPrice;
-    const pending=getPendingOrders();
-    pending.push({id:selId,name:a.name,sym:a.sym,orderType,limitPrice,usd,qty,mode,time:Date.now()});
-    savePendingOrders(pending);
-    toast('🕐 Order Placed',`${a.sym} ${orderType} @ ${fU(limitPrice)}`,'success');
+    if(!limitPrice||limitPrice<=0){toast('Enter a target price','','warn');return;}
+
+    if(mode==='buy'){
+      if(usd>S[wallet]){toast('Insufficient funds',`${fU(S[wallet])} available`,'error');return;}
+      const qty = usd/limitPrice;
+      const pending=getPendingOrders();
+      pending.push({id:selId,name:a.name,sym:a.sym,orderType,limitPrice,usd,qty,mode,time:Date.now()});
+      savePendingOrders(pending);
+      toast('🕐 Order Placed',`${a.sym} ${orderType.toUpperCase()} @ ${fU(limitPrice)}`,'success');
+    } else {
+      // SELL — use actual holding qty, not usd-based qty
+      const h=S.h[selId];
+      if(!h||h.qty<1e-8){toast('No position',`You don't hold ${a.sym}`,'error');return;}
+      const qty = usd>0 ? Math.min(usd/limitPrice, h.qty) : h.qty; // if usd entered use it, else sell all
+      const pending=getPendingOrders();
+      pending.push({id:selId,name:a.name,sym:a.sym,orderType,limitPrice,usd:qty*limitPrice,qty,mode,time:Date.now()});
+      savePendingOrders(pending);
+      toast('🕐 Order Placed',`${a.sym} ${orderType.toUpperCase()} @ ${fU(limitPrice)}`,'success');
+    }
     $('t-usd').value='';$('t-qty').value='';$('t-limit').value='';$('usd-hint').textContent='';$('limit-hint').textContent='';
+    renderOrders();
     return;
   }
 
