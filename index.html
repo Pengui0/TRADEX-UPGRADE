@@ -27,172 +27,195 @@ input,select,button { font-family:var(--sans); }
   background:#03030a;
   display:flex; flex-direction:column; align-items:center; justify-content:center;
   overflow:hidden;
-  animation: splashExit .9s cubic-bezier(.7,0,1,1) 4.2s forwards;
+  animation: splashExit .8s ease-in 4s forwards;
 }
-@keyframes splashExit {
-  0%   { opacity:1; }
-  100% { opacity:0; pointer-events:none; }
-}
+@keyframes splashExit { to { opacity:0; pointer-events:none; } }
 
-/* Full-screen canvas for the animated background */
-#splash-canvas {
-  position:absolute; inset:0; z-index:0;
-}
-
-/* Horizontal scanline grid — like a trading terminal */
+/* Static nebula — NO animation on large elements = no GPU thrash */
 #splash::before {
-  content:''; position:absolute; inset:0; z-index:1; pointer-events:none;
-  background-image: repeating-linear-gradient(
-    0deg, transparent, transparent 38px,
-    rgba(108,127,255,.025) 38px, rgba(108,127,255,.025) 39px
-  );
-  animation: scanIn .6s ease .2s both;
+  content:''; position:absolute; inset:0; pointer-events:none;
+  background:
+    radial-gradient(ellipse 55% 45% at 15% 20%, rgba(108,127,255,.16) 0%, transparent 55%),
+    radial-gradient(ellipse 50% 40% at 85% 75%, rgba(0,229,160,.11)   0%, transparent 55%),
+    radial-gradient(ellipse 35% 35% at 78% 12%, rgba(108,127,255,.07) 0%, transparent 50%),
+    radial-gradient(ellipse 30% 30% at 18% 82%, rgba(0,229,160,.06)   0%, transparent 50%);
+  /* opacity-only animation = GPU-composited, zero jank */
+  animation: nebulaFade 5s ease-in-out infinite alternate;
 }
-@keyframes scanIn { from{opacity:0} to{opacity:1} }
+@keyframes nebulaFade { from{opacity:.6} to{opacity:1} }
 
-/* Vertical grid lines too */
+/* Terminal grid — static, no animation */
 #splash::after {
-  content:''; position:absolute; inset:0; z-index:1; pointer-events:none;
-  background-image: repeating-linear-gradient(
-    90deg, transparent, transparent 78px,
-    rgba(108,127,255,.018) 78px, rgba(108,127,255,.018) 79px
-  );
-  animation: scanIn .6s ease .3s both;
+  content:''; position:absolute; inset:0; pointer-events:none; opacity:.6;
+  background-image:
+    repeating-linear-gradient(0deg,  transparent, transparent 39px, rgba(108,127,255,.02) 39px, rgba(108,127,255,.02) 40px),
+    repeating-linear-gradient(90deg, transparent, transparent 79px, rgba(108,127,255,.014) 79px, rgba(108,127,255,.014) 80px);
 }
 
-/* Ticker strip at bottom */
-.splash-ticker {
-  position:absolute; bottom:0; left:0; right:0; z-index:3;
-  height:28px; background:rgba(108,127,255,.06);
-  border-top:1px solid rgba(108,127,255,.15);
-  overflow:hidden; display:flex; align-items:center;
-  animation: splashFadeUp .5s ease 1s both;
+/* Star field — box-shadow is static, only opacity animates = smooth */
+.splash-stars {
+  position:absolute; inset:0; pointer-events:none; overflow:hidden;
+  will-change:opacity;
 }
-.splash-ticker-inner {
-  display:flex; gap:32px; white-space:nowrap;
-  animation: tickerScroll 10s linear 1.2s infinite;
-  font-family:'DM Mono',monospace; font-size:.62rem; letter-spacing:.5px;
+.splash-stars::before {
+  content:''; position:absolute; width:2px; height:2px;
+  background:transparent; border-radius:50%;
+  box-shadow:
+    120px 80px rgba(255,255,255,.6), 240px 160px rgba(255,255,255,.4),
+    380px 60px rgba(255,255,255,.5), 520px 200px rgba(255,255,255,.3),
+    680px 90px rgba(255,255,255,.6), 800px 170px rgba(255,255,255,.4),
+    950px 50px rgba(255,255,255,.5), 1100px 130px rgba(255,255,255,.3),
+    1250px 200px rgba(255,255,255,.5),1380px 70px rgba(255,255,255,.4),
+    60px 300px rgba(255,255,255,.3), 180px 420px rgba(255,255,255,.5),
+    320px 350px rgba(255,255,255,.4),460px 480px rgba(255,255,255,.3),
+    600px 320px rgba(255,255,255,.6),740px 440px rgba(255,255,255,.4),
+    880px 380px rgba(255,255,255,.3),1020px 460px rgba(255,255,255,.5),
+    80px 550px rgba(255,255,255,.4), 220px 620px rgba(255,255,255,.3),
+    360px 580px rgba(255,255,255,.5),500px 650px rgba(255,255,255,.3),
+    640px 520px rgba(255,255,255,.4),780px 680px rgba(255,255,255,.3),
+    140px 740px rgba(255,255,255,.3),280px 800px rgba(255,255,255,.4),
+    420px 760px rgba(255,255,255,.3),560px 840px rgba(255,255,255,.5);
+  animation: starsFade 4s ease-in-out infinite alternate;
 }
-@keyframes tickerScroll { from{transform:translateX(0)} to{transform:translateX(-50%)} }
-.splash-tick-item { display:flex; gap:6px; align-items:center; }
-.splash-tick-sym { color:rgba(255,255,255,.5); }
-.splash-tick-up   { color:#00e5a0; }
-.splash-tick-dn   { color:#ff5566; }
+.splash-stars::after {
+  content:''; position:absolute; width:1px; height:1px;
+  background:transparent; border-radius:50%;
+  box-shadow:
+    170px 120px rgba(255,255,255,.4),310px 240px rgba(255,255,255,.3),
+    450px 150px rgba(255,255,255,.5),590px 280px rgba(255,255,255,.3),
+    730px 110px rgba(255,255,255,.4),870px 250px rgba(255,255,255,.3),
+    100px 400px rgba(255,255,255,.4),250px 500px rgba(255,255,255,.3),
+    400px 450px rgba(255,255,255,.5),700px 410px rgba(255,255,255,.4),
+    200px 680px rgba(255,255,255,.3),350px 720px rgba(255,255,255,.4);
+  animation: starsFade 5s ease-in-out 1s infinite alternate;
+}
+@keyframes starsFade { from{opacity:.45} to{opacity:1} }
+
+/* Static SVG chart bg */
+.splash-chart-bg {
+  position:absolute; bottom:28px; left:50%; transform:translateX(-50%);
+  width:min(580px,90vw); height:90px; pointer-events:none; overflow:hidden;
+  opacity:.15; animation: splashFadeUp .5s ease 1.2s both;
+  will-change:opacity;
+}
+.splash-chart-bg svg { width:100%; height:100%; }
+
+/* Orbit rings — opacity only, NO scale */
+.splash-orbit {
+  position:absolute; border-radius:50%;
+  border:1px solid rgba(108,127,255,.15);
+  top:50%; left:50%; transform:translate(-50%,-50%);
+  will-change:opacity;
+}
+.splash-orbit-1 { width:220px; height:220px; border-color:rgba(108,127,255,.14); animation:orbitFade 3s ease-in-out .8s infinite alternate; }
+.splash-orbit-2 { width:340px; height:340px; border-color:rgba(108,127,255,.07); animation:orbitFade 4s ease-in-out 1s  infinite alternate; }
+.splash-orbit-3 { width:460px; height:460px; border-color:rgba(0,229,160,.05);  animation:orbitFade 5s ease-in-out 1.2s infinite alternate; }
+@keyframes orbitFade { from{opacity:.2} to{opacity:.9} }
+
+/* Satellite — rotate only on a tiny element = zero cost */
+.splash-sat {
+  position:absolute; width:5px; height:5px; border-radius:50%;
+  background:var(--accent); box-shadow:0 0 8px var(--accent);
+  top:50%; left:50%; will-change:transform;
+  animation: rotateSat 5s linear 1s infinite;
+}
+@keyframes rotateSat {
+  from { transform:rotate(0deg) translateX(110px); }
+  to   { transform:rotate(360deg) translateX(110px); }
+}
+.splash-sat-2 {
+  width:3px; height:3px;
+  background:var(--green); box-shadow:0 0 6px var(--green);
+  animation: rotateSat2 8s linear 1.5s infinite;
+}
+@keyframes rotateSat2 {
+  from { transform:rotate(200deg) translateX(170px); }
+  to   { transform:rotate(560deg) translateX(170px); }
+}
 
 /* Centre content */
 .splash-logo-wrap {
   position:relative; z-index:2;
   display:flex; flex-direction:column; align-items:center;
 }
-
-/* Orbit rings */
-.splash-orbit {
-  position:absolute; border-radius:50%; border:1px solid rgba(108,127,255,.2);
-  top:50%; left:50%; transform:translate(-50%,-50%);
-  animation: orbitPulse 3s ease-in-out .8s infinite alternate;
-}
-.splash-orbit-1 { width:200px; height:200px; animation-delay:.8s; border-color:rgba(108,127,255,.15); }
-.splash-orbit-2 { width:300px; height:300px; animation-delay:1s;  border-color:rgba(108,127,255,.08); }
-.splash-orbit-3 { width:420px; height:420px; animation-delay:1.2s;border-color:rgba(0,229,160,.05);  }
-@keyframes orbitPulse {
-  from { opacity:.4; transform:translate(-50%,-50%) scale(.96); }
-  to   { opacity:1;  transform:translate(-50%,-50%) scale(1.04); }
-}
-
-/* Orbit dot — like a satellite */
-.splash-sat {
-  position:absolute; width:5px; height:5px; border-radius:50%;
-  background:var(--accent); box-shadow:0 0 8px var(--accent);
-  top:50%; left:50%;
-  transform-origin:0 0;
-  animation: satOrbit 4s linear 1s infinite;
-}
-@keyframes satOrbit {
-  from { transform:rotate(0deg) translateX(100px) rotate(0deg); }
-  to   { transform:rotate(360deg) translateX(100px) rotate(-360deg); }
-}
-.splash-sat-2 {
-  background:var(--green); box-shadow:0 0 8px var(--green);
-  animation: satOrbit2 6s linear 1.5s infinite;
-  width:3px; height:3px;
-}
-@keyframes satOrbit2 {
-  from { transform:rotate(120deg) translateX(150px) rotate(-120deg); }
-  to   { transform:rotate(480deg) translateX(150px) rotate(-480deg); }
-}
-
-/* Logo */
 .splash-logo-svg {
   width:80px; height:80px; margin-bottom:20px;
-  animation: logoReveal 1s cubic-bezier(.16,1,.3,1) .6s both;
-  filter:drop-shadow(0 0 30px rgba(108,127,255,.8)) drop-shadow(0 0 60px rgba(108,127,255,.4));
-  position:relative; z-index:2;
+  will-change:opacity,transform;
+  animation: logoIn .9s cubic-bezier(.16,1,.3,1) .5s both;
+  filter:drop-shadow(0 0 24px rgba(108,127,255,.9));
 }
-@keyframes logoReveal {
-  from { opacity:0; transform:scale(.3); filter:drop-shadow(0 0 60px rgba(108,127,255,1)); }
-  60%  { transform:scale(1.08); }
-  to   { opacity:1; transform:scale(1); }
+@keyframes logoIn {
+  from { opacity:0; transform:scale(.3) translateY(10px); }
+  65%  { transform:scale(1.08) translateY(0); }
+  to   { opacity:1; transform:scale(1) translateY(0); }
 }
-
 .splash-title {
   font-size:3rem; font-weight:800; letter-spacing:-1px;
-  background:linear-gradient(135deg, #fff 0%, rgba(255,255,255,.65) 100%);
+  background:linear-gradient(135deg,#fff 0%,rgba(255,255,255,.65) 100%);
   -webkit-background-clip:text; -webkit-text-fill-color:transparent;
-  animation: titleReveal .8s cubic-bezier(.16,1,.3,1) 1.2s both;
-  position:relative; z-index:2;
-}
-@keyframes titleReveal {
-  from { opacity:0; transform:translateY(20px); letter-spacing:8px; }
-  to   { opacity:1; transform:translateY(0); letter-spacing:-1px; }
+  will-change:opacity,transform;
+  animation: splashFadeUp .7s cubic-bezier(.16,1,.3,1) 1.1s both;
 }
 .splash-title span {
-  background:linear-gradient(135deg,var(--accent) 0%,var(--green) 100%);
+  background:linear-gradient(135deg,var(--accent),var(--green));
   -webkit-background-clip:text; -webkit-text-fill-color:transparent;
 }
-
 .splash-tagline {
-  font-size:.72rem; color:rgba(255,255,255,.35); margin-top:6px;
+  font-size:.7rem; color:rgba(255,255,255,.3); margin-top:6px;
   letter-spacing:3px; text-transform:uppercase; font-family:'DM Mono',monospace;
-  animation: splashFadeUp .6s ease 1.5s both;
-  position:relative; z-index:2;
+  animation: splashFadeUp .5s ease 1.4s both;
 }
-
-/* Stat counters — stock-themed */
 .splash-stats {
-  display:flex; gap:28px; margin-top:32px;
-  animation: splashFadeUp .5s ease 1.7s both;
-  position:relative; z-index:2;
+  display:flex; gap:24px; margin-top:26px;
+  animation: splashFadeUp .5s ease 1.6s both;
 }
 .splash-stat { text-align:center; }
-.splash-stat-val {
-  font-family:'DM Mono',monospace; font-size:.9rem; font-weight:600;
-  color:var(--green); letter-spacing:.5px;
-}
-.splash-stat-lbl { font-size:.56rem; color:rgba(255,255,255,.25); letter-spacing:1.5px; text-transform:uppercase; margin-top:2px; }
-
-/* Loading bar */
+.splash-stat-val { font-family:'DM Mono',monospace; font-size:.88rem; font-weight:600; color:var(--green); }
+.splash-stat-val.acc { color:var(--accent); }
+.splash-stat-lbl { font-size:.54rem; color:rgba(255,255,255,.22); letter-spacing:1.5px; text-transform:uppercase; margin-top:2px; }
+.splash-sep { width:1px; background:rgba(255,255,255,.1); align-self:stretch; margin:2px 0; }
 .splash-bar-wrap {
-  width:180px; height:1px; background:rgba(255,255,255,.08);
-  margin-top:28px; overflow:hidden; position:relative; z-index:2;
-  animation: splashFadeUp .4s ease 1.9s both;
+  width:160px; height:1px; background:rgba(255,255,255,.08);
+  margin-top:26px; overflow:hidden;
+  animation: splashFadeUp .4s ease 1.8s both;
 }
 .splash-bar {
-  height:100%; width:0%;
+  height:100%; width:0%; will-change:width;
   background:linear-gradient(90deg,var(--accent),var(--green));
-  animation: splashBarFill 1.8s cubic-bezier(.25,.46,.45,.94) 2s forwards;
-  box-shadow:0 0 12px rgba(108,127,255,.9);
+  animation: barFill 1.8s cubic-bezier(.25,.46,.45,.94) 1.9s forwards;
+  box-shadow:0 0 10px rgba(108,127,255,.9);
 }
-@keyframes splashBarFill { to { width:100%; } }
+@keyframes barFill { to { width:100%; } }
 .splash-status {
   font-size:.58rem; color:rgba(255,255,255,.2); margin-top:10px;
   font-family:'DM Mono',monospace; letter-spacing:1px;
-  position:relative; z-index:2;
-  animation: splashFadeUp .4s ease 1.9s both;
+  animation: splashFadeUp .4s ease 1.8s both;
 }
 @keyframes splashFadeUp {
   from { opacity:0; transform:translateY(8px); }
   to   { opacity:1; transform:translateY(0); }
 }
+
+/* Bottom ticker — translateX only = GPU composited */
+.splash-ticker {
+  position:absolute; bottom:0; left:0; right:0; z-index:3;
+  height:26px; background:rgba(108,127,255,.05);
+  border-top:1px solid rgba(108,127,255,.12);
+  overflow:hidden; display:flex; align-items:center;
+  animation: splashFadeUp .5s ease 1s both;
+}
+.splash-ticker-inner {
+  display:flex; gap:28px; white-space:nowrap;
+  will-change:transform;
+  animation: tickScroll 14s linear 1.5s infinite;
+  font-family:'DM Mono',monospace; font-size:.6rem; letter-spacing:.5px;
+}
+@keyframes tickScroll { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+.splash-tick-item { display:flex; gap:6px; }
+.splash-tick-sym { color:rgba(255,255,255,.4); }
+.splash-tick-up  { color:#00e5a0; }
+.splash-tick-dn  { color:#ff5566; }
+
 
 /* ─── AUTH ─── */
 #auth {
@@ -631,8 +654,8 @@ input,select,button { font-family:var(--sans); }
 
 <!-- ENTRY SPLASH -->
 <div id="splash">
-  <!-- Canvas for stars + candlestick chart animation -->
-  <canvas id="splash-canvas"></canvas>
+  <!-- Pure CSS star field — zero JS -->
+  <div class="splash-stars"></div>
 
   <!-- Orbit rings -->
   <div class="splash-orbit splash-orbit-1"></div>
@@ -641,7 +664,7 @@ input,select,button { font-family:var(--sans); }
   <div class="splash-sat"></div>
   <div class="splash-sat splash-sat-2"></div>
 
-  <!-- Centre logo + text -->
+  <!-- Centre content -->
   <div class="splash-logo-wrap">
     <svg class="splash-logo-svg" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
       <rect width="80" height="80" rx="20" fill="url(#splashG)"/>
@@ -660,37 +683,70 @@ input,select,button { font-family:var(--sans); }
     <div class="splash-tagline">Virtual Stock & Crypto Trading</div>
     <div class="splash-stats">
       <div class="splash-stat"><div class="splash-stat-val">98+</div><div class="splash-stat-lbl">Stocks</div></div>
-      <div class="splash-stat"><div class="splash-stat-val" style="color:var(--accent)">15+</div><div class="splash-stat-lbl">Cryptos</div></div>
+      <div class="splash-sep"></div>
+      <div class="splash-stat"><div class="splash-stat-val acc">15+</div><div class="splash-stat-lbl">Cryptos</div></div>
+      <div class="splash-sep"></div>
       <div class="splash-stat"><div class="splash-stat-val">Live</div><div class="splash-stat-lbl">Prices</div></div>
     </div>
     <div class="splash-bar-wrap"><div class="splash-bar"></div></div>
     <div class="splash-status">Connecting to markets…</div>
   </div>
 
+  <!-- Static SVG price chart in background — CSS animated, zero lag -->
+  <div class="splash-chart-bg">
+    <svg viewBox="0 0 580 90" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="chartGrad" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#6c7fff" stop-opacity="0"/>
+          <stop offset="50%" stop-color="#6c7fff" stop-opacity=".6"/>
+          <stop offset="100%" stop-color="#00e5a0" stop-opacity=".9"/>
+        </linearGradient>
+        <linearGradient id="chartFill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#6c7fff" stop-opacity=".12"/>
+          <stop offset="100%" stop-color="#6c7fff" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+      <!-- Area fill -->
+      <path d="M0,70 L30,60 L60,65 L90,50 L120,55 L150,40 L180,45 L210,30 L240,38 L270,25 L300,32 L330,18 L360,24 L390,12 L420,20 L450,8 L480,15 L510,5 L540,12 L580,4 L580,90 L0,90 Z" fill="url(#chartFill)"/>
+      <!-- Price line -->
+      <path d="M0,70 L30,60 L60,65 L90,50 L120,55 L150,40 L180,45 L210,30 L240,38 L270,25 L300,32 L330,18 L360,24 L390,12 L420,20 L450,8 L480,15 L510,5 L540,12 L580,4" fill="none" stroke="url(#chartGrad)" stroke-width="1.5" stroke-linecap="round"/>
+      <!-- Candle bars (decorative) -->
+      <rect x="25" y="56" width="4" height="8"  fill="rgba(0,229,160,.5)" rx="1"/>
+      <rect x="55" y="62" width="4" height="6"  fill="rgba(255,85,102,.5)" rx="1"/>
+      <rect x="85" y="47" width="4" height="7"  fill="rgba(0,229,160,.5)" rx="1"/>
+      <rect x="145" y="37" width="4" height="7" fill="rgba(0,229,160,.5)" rx="1"/>
+      <rect x="175" y="41" width="4" height="8" fill="rgba(255,85,102,.4)" rx="1"/>
+      <rect x="265" y="22" width="4" height="7" fill="rgba(0,229,160,.5)" rx="1"/>
+      <rect x="325" y="14" width="4" height="8" fill="rgba(0,229,160,.5)" rx="1"/>
+      <rect x="385" y="9"  width="4" height="7" fill="rgba(0,229,160,.5)" rx="1"/>
+      <rect x="445" y="5"  width="4" height="7" fill="rgba(0,229,160,.5)" rx="1"/>
+      <rect x="505" y="2"  width="4" height="7" fill="rgba(0,229,160,.5)" rx="1"/>
+    </svg>
+  </div>
+
   <!-- Bottom ticker -->
   <div class="splash-ticker">
     <div class="splash-ticker-inner">
-      <span class="splash-tick-item"><span class="splash-tick-sym">AAPL</span><span class="splash-tick-up">▲ 0.92%</span></span>
-      <span class="splash-tick-item"><span class="splash-tick-sym">BTC</span><span class="splash-tick-up">▲ 2.14%</span></span>
-      <span class="splash-tick-item"><span class="splash-tick-sym">NVDA</span><span class="splash-tick-dn">▼ 1.18%</span></span>
-      <span class="splash-tick-item"><span class="splash-tick-sym">ETH</span><span class="splash-tick-up">▲ 3.42%</span></span>
-      <span class="splash-tick-item"><span class="splash-tick-sym">TSLA</span><span class="splash-tick-dn">▼ 2.05%</span></span>
-      <span class="splash-tick-item"><span class="splash-tick-sym">RELIANCE</span><span class="splash-tick-up">▲ 0.73%</span></span>
-      <span class="splash-tick-item"><span class="splash-tick-sym">SOL</span><span class="splash-tick-up">▲ 4.18%</span></span>
-      <span class="splash-tick-item"><span class="splash-tick-sym">META</span><span class="splash-tick-dn">▼ 0.88%</span></span>
-      <span class="splash-tick-item"><span class="splash-tick-sym">TCS</span><span class="splash-tick-up">▲ 1.21%</span></span>
-      <span class="splash-tick-item"><span class="splash-tick-sym">MSFT</span><span class="splash-tick-up">▲ 0.54%</span></span>
-      <!-- duplicate for seamless loop -->
-      <span class="splash-tick-item"><span class="splash-tick-sym">AAPL</span><span class="splash-tick-up">▲ 0.92%</span></span>
-      <span class="splash-tick-item"><span class="splash-tick-sym">BTC</span><span class="splash-tick-up">▲ 2.14%</span></span>
-      <span class="splash-tick-item"><span class="splash-tick-sym">NVDA</span><span class="splash-tick-dn">▼ 1.18%</span></span>
-      <span class="splash-tick-item"><span class="splash-tick-sym">ETH</span><span class="splash-tick-up">▲ 3.42%</span></span>
-      <span class="splash-tick-item"><span class="splash-tick-sym">TSLA</span><span class="splash-tick-dn">▼ 2.05%</span></span>
-      <span class="splash-tick-item"><span class="splash-tick-sym">RELIANCE</span><span class="splash-tick-up">▲ 0.73%</span></span>
-      <span class="splash-tick-item"><span class="splash-tick-sym">SOL</span><span class="splash-tick-up">▲ 4.18%</span></span>
-      <span class="splash-tick-item"><span class="splash-tick-sym">META</span><span class="splash-tick-dn">▼ 0.88%</span></span>
-      <span class="splash-tick-item"><span class="splash-tick-sym">TCS</span><span class="splash-tick-up">▲ 1.21%</span></span>
-      <span class="splash-tick-item"><span class="splash-tick-sym">MSFT</span><span class="splash-tick-up">▲ 0.54%</span></span>
+      <span class="splash-tick-item"><span class="splash-tick-sym">AAPL</span><span class="splash-tick-up">▲0.92%</span></span>
+      <span class="splash-tick-item"><span class="splash-tick-sym">BTC</span><span class="splash-tick-up">▲2.14%</span></span>
+      <span class="splash-tick-item"><span class="splash-tick-sym">NVDA</span><span class="splash-tick-dn">▼1.18%</span></span>
+      <span class="splash-tick-item"><span class="splash-tick-sym">ETH</span><span class="splash-tick-up">▲3.42%</span></span>
+      <span class="splash-tick-item"><span class="splash-tick-sym">TSLA</span><span class="splash-tick-dn">▼2.05%</span></span>
+      <span class="splash-tick-item"><span class="splash-tick-sym">RELIANCE</span><span class="splash-tick-up">▲0.73%</span></span>
+      <span class="splash-tick-item"><span class="splash-tick-sym">SOL</span><span class="splash-tick-up">▲4.18%</span></span>
+      <span class="splash-tick-item"><span class="splash-tick-sym">META</span><span class="splash-tick-dn">▼0.88%</span></span>
+      <span class="splash-tick-item"><span class="splash-tick-sym">TCS</span><span class="splash-tick-up">▲1.21%</span></span>
+      <span class="splash-tick-item"><span class="splash-tick-sym">MSFT</span><span class="splash-tick-up">▲0.54%</span></span>
+      <span class="splash-tick-item"><span class="splash-tick-sym">AAPL</span><span class="splash-tick-up">▲0.92%</span></span>
+      <span class="splash-tick-item"><span class="splash-tick-sym">BTC</span><span class="splash-tick-up">▲2.14%</span></span>
+      <span class="splash-tick-item"><span class="splash-tick-sym">NVDA</span><span class="splash-tick-dn">▼1.18%</span></span>
+      <span class="splash-tick-item"><span class="splash-tick-sym">ETH</span><span class="splash-tick-up">▲3.42%</span></span>
+      <span class="splash-tick-item"><span class="splash-tick-sym">TSLA</span><span class="splash-tick-dn">▼2.05%</span></span>
+      <span class="splash-tick-item"><span class="splash-tick-sym">RELIANCE</span><span class="splash-tick-up">▲0.73%</span></span>
+      <span class="splash-tick-item"><span class="splash-tick-sym">SOL</span><span class="splash-tick-up">▲4.18%</span></span>
+      <span class="splash-tick-item"><span class="splash-tick-sym">META</span><span class="splash-tick-dn">▼0.88%</span></span>
+      <span class="splash-tick-item"><span class="splash-tick-sym">TCS</span><span class="splash-tick-up">▲1.21%</span></span>
+      <span class="splash-tick-item"><span class="splash-tick-sym">MSFT</span><span class="splash-tick-up">▲0.54%</span></span>
     </div>
   </div>
 </div>
@@ -2562,121 +2618,6 @@ document.addEventListener('keydown', e => {
     }
   }catch(e){ console.warn('Init error',e); }
   $('auth').style.display='flex';
-})();// ─── SPLASH CANVAS (stars + candlestick chart) ───
-(function(){
-  const c = document.getElementById('splash-canvas');
-  if(!c) return;
-  const ctx = c.getContext('2d');
-  let W, H, stars=[], candles=[], chartProgress=0, raf;
-  const ACCENT='rgba(108,127,255,', GREEN='rgba(0,229,160,', RED='rgba(255,85,102,';
-
-  function resize(){
-    W=c.width=window.innerWidth; H=c.height=window.innerHeight;
-    // Regenerate stars
-    stars = Array.from({length:160},()=>({
-      x:Math.random()*W, y:Math.random()*H,
-      r:Math.random()*1.4+.2,
-      o:Math.random()*.5+.08,
-      tw:Math.random()*Math.PI*2,
-      spd:Math.random()*.015+.005
-    }));
-    // Generate candlestick data
-    candles=[];
-    let price=100;
-    for(let i=0;i<40;i++){
-      const chg=(Math.random()-.45)*8;
-      const open=price, close=price+chg;
-      const hi=Math.max(open,close)+Math.random()*4;
-      const lo=Math.min(open,close)-Math.random()*4;
-      candles.push({open,close,hi,lo,up:close>=open});
-      price=close;
-    }
-  }
-
-  function drawStars(t){
-    stars.forEach(s=>{
-      s.tw+=s.spd;
-      const o=s.o*(.6+.4*Math.sin(s.tw));
-      ctx.beginPath();
-      ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
-      ctx.fillStyle=`rgba(255,255,255,${o})`;
-      ctx.fill();
-    });
-  }
-
-  function drawNebula(){
-    // Soft glowing nebula clouds
-    const g1=ctx.createRadialGradient(W*.2,H*.3,0,W*.2,H*.3,W*.4);
-    g1.addColorStop(0,'rgba(108,127,255,.06)');
-    g1.addColorStop(1,'transparent');
-    ctx.fillStyle=g1; ctx.fillRect(0,0,W,H);
-    const g2=ctx.createRadialGradient(W*.8,H*.7,0,W*.8,H*.7,W*.35);
-    g2.addColorStop(0,'rgba(0,229,160,.04)');
-    g2.addColorStop(1,'transparent');
-    ctx.fillStyle=g2; ctx.fillRect(0,0,W,H);
-  }
-
-  function drawCandleChart(t){
-    if(chartProgress>=candles.length) return;
-    chartProgress=Math.min(candles.length, chartProgress+.35);
-
-    const cx=W*.5, cy=H*.5;
-    const cw=Math.min(W*.6,480), ch=Math.min(H*.25,120);
-    const x0=cx-cw/2, y0=cy+80;
-    const n=Math.ceil(chartProgress);
-    if(n<2) return;
-
-    // Draw visible candles
-    const candleW=Math.max(4, cw/candles.length*.65);
-    const vals=candles.slice(0,n).flatMap(c=>[c.hi,c.lo]);
-    const mn=Math.min(...vals), mx=Math.max(...vals), rng=mx-mn||1;
-    const toY=v=>y0+ch-(v-mn)/rng*ch;
-
-    candles.slice(0,n).forEach((c,i)=>{
-      const alpha=Math.min(1,(n-i-.5)*.15+.3);
-      const x=x0+(i/(candles.length-1))*cw;
-      const oy=toY(c.open), cy2=toY(c.close);
-      const hy=toY(c.hi), ly=toY(c.lo);
-      const col=c.up?`${GREEN}${alpha})`:`${RED}${alpha})`;
-      // Wick
-      ctx.beginPath(); ctx.moveTo(x,hy); ctx.lineTo(x,ly);
-      ctx.strokeStyle=col; ctx.lineWidth=1; ctx.stroke();
-      // Body
-      ctx.fillStyle=col;
-      ctx.fillRect(x-candleW/2, Math.min(oy,cy2), candleW, Math.max(Math.abs(oy-cy2),1));
-    });
-
-    // Draw price line over candles
-    if(n>=2){
-      ctx.beginPath();
-      candles.slice(0,n).forEach((c,i)=>{
-        const x=x0+(i/(candles.length-1))*cw;
-        const y=toY(c.close);
-        i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
-      });
-      const lineGrd=ctx.createLinearGradient(x0,0,x0+cw,0);
-      lineGrd.addColorStop(0,'rgba(108,127,255,0)');
-      lineGrd.addColorStop(.5,'rgba(108,127,255,.4)');
-      lineGrd.addColorStop(1,'rgba(0,229,160,.7)');
-      ctx.strokeStyle=lineGrd; ctx.lineWidth=1.5;
-      ctx.stroke();
-    }
-  }
-
-  function frame(t){
-    ctx.clearRect(0,0,W,H);
-    drawNebula();
-    drawStars(t);
-    drawCandleChart(t);
-    raf=requestAnimationFrame(frame);
-  }
-
-  resize();
-  window.addEventListener('resize',resize);
-  raf=requestAnimationFrame(frame);
-
-  // Stop after splash exits
-  setTimeout(()=>{ cancelAnimationFrame(raf); ctx.clearRect(0,0,W,H); },5200);
 })();
 
 // ─── COMET BACKGROUND ───
