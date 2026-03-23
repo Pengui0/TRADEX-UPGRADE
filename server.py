@@ -41,7 +41,7 @@ SYMBOLS = {
     'tsm':'TSM','baba':'BABA','toyota':'TM',
     'hsba':'HSBC','shel':'SHEL','ulvr':'UL',
     'sap':'SAP','asml':'ASML','lvmh':'LVMUY','siegy':'SIEGY',
-    'samsung':'005930.KS',  # KRX proper ticker — replaces broken SSNLF OTC
+    'samsung':'005930.KS',  # KRX — converts KRW→USD
     'sony':'SONY','bidu':'BIDU','jd':'JD',
     'se':'SE','grab':'GRAB','rio':'RIO','bhp':'BHP',
     'amat':'AMAT','lmt':'LMT','sbux':'SBUX','brkb':'BRK-B',
@@ -70,6 +70,7 @@ NSE_IDS = {
 
 # ── Shared state (thread-safe) ───────────────────────────────────────────────
 _cache: dict = {}          # {app_id: {p, c, hi, lo, mc}}
+_price_ts: dict = {}       # {app_id: unix timestamp of last successful price fetch}
 _last_fetch: float = 0     # unix timestamp of last successful fetch
 _lock = threading.Lock()
 
@@ -142,7 +143,10 @@ def fetch_all() -> None:
 
     with _lock:
         _cache.update(result)
-        _last_fetch = time.time()
+        now = time.time()
+        for app_id in result:
+            _price_ts[app_id] = now
+        _last_fetch = now
 
     print(f"[TradeX] fetch_all done: {len(result)}/{len(SYMBOLS)} stocks")
 
@@ -218,13 +222,15 @@ ASSET_META = {
 def api_prices():
     """
     Returns real-time stock prices from yfinance.
-    Response: { prices: {id: {p, c, hi, lo, mc}}, age: seconds_since_fetch, ok: bool }
+    Response: { prices: {id: {p, c, hi, lo, mc}}, ts: {id: unix_ts}, age: seconds_since_fetch, ok: bool }
     """
+    now = time.time()
     with _lock:
         data  = dict(_cache)
-        age   = round(time.time() - _last_fetch) if _last_fetch else -1
+        ts    = {k: round(now - v) for k, v in _price_ts.items()}  # seconds since each price updated
+        age   = round(now - _last_fetch) if _last_fetch else -1
         ok    = bool(data)
-    return jsonify({'prices': data, 'age': age, 'ok': len(data) > 0})
+    return jsonify({'prices': data, 'ts': ts, 'age': age, 'ok': len(data) > 0})
 
 
 @app.route('/api/assets')
