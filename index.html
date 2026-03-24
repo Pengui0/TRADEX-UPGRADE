@@ -2263,11 +2263,11 @@ function drawTxChart(canvasId, id, tf, opts={}) {
   if (!data.length) return;
 
   const dpr = window.devicePixelRatio||1;
-  // Fix #2: always use offsetWidth for CSS pixels, multiply by dpr for backing store
   const W = (canvas.offsetWidth||canvas.parentElement?.offsetWidth||600);
   const showRSI = opts.rsi && !opts.mini;
   const showVol = opts.vol !== false;
-  const mainH = showRSI ? W*.38 : W*.52;
+  // Bug 2 fix: fixed height — not proportional to width (was blowing up on large screens)
+  const mainH = 340;
   const volH = showVol ? 40 : 0;
   const rsiH = showRSI ? 80 : 0;
   const totalH = mainH + volH + rsiH + (showRSI?8:0);
@@ -2438,7 +2438,7 @@ function txSetupMouse(canvasId, id, tf, opts={}) {
     const dpr=window.devicePixelRatio||1;
     const W=canvas.offsetWidth;
     const showRSI=opts.rsi;
-    const mainH=showRSI?W*.38:W*.52;
+    const mainH=340; // fixed height matches drawTxChart
     const pad={l:8,r:52,t:14,b:24};
     const chartW=W-pad.l-pad.r;
     const vals=data.flatMap(d=>[d.h,d.l]);
@@ -2481,7 +2481,9 @@ function txSetupMouse(canvasId, id, tf, opts={}) {
 // Load chart for the small inline view
 function loadTVChart(id) {
   txSelId = id;
-  txData = {}; // clear cache on new asset
+  // Bug 1 fix: only clear cache for the NEW asset, not everything
+  // This stops the chart regenerating randomly on every click
+  Object.keys(txData).forEach(k=>{ if(!k.startsWith(id+'_')) delete txData[k]; });
   const canvas = $('tx-chart-canvas'); if(!canvas) return;
   canvas.style.width='100%';
   requestAnimationFrame(()=>{
@@ -2504,7 +2506,8 @@ function setTF(tf) {
   currentTF = tf;
   document.querySelectorAll('.tf-btn').forEach(b=>b.classList.toggle('on',b.textContent===tf));
   document.querySelectorAll('#tx-modal-tfs .tx-tb-btn').forEach(b=>b.classList.toggle('on',b.textContent===tf));
-  txData={};
+  // Bug 1 fix: only clear cache for this specific TF, not all data
+  if(txSelId) delete txData[txSelId+'_'+tf];
   if(txSelId){
     loadTVChart(txSelId);
     if(txModal) drawTxModalChart();
@@ -2517,14 +2520,14 @@ function setTxType(t){
   txChartType=t;
   $('tx-type-candle').classList.toggle('on',t==='candle');
   $('tx-type-line').classList.toggle('on',t==='line');
-  txData={};
+  // Bug 1 fix: chart type doesn't need cache clear — same data, different render
   if(txSelId){ loadTVChart(txSelId); if(txModal) requestAnimationFrame(()=>drawTxModalChart()); }
 }
 
 function toggleTxInd(ind){
   txInds[ind]=!txInds[ind];
   $('tx-ind-'+ind).classList.toggle('on',txInds[ind]);
-  txData={};
+  // Bug 1 fix: indicators don't need cache clear — same data, different render
   if(txSelId){ loadTVChart(txSelId); if(txModal) requestAnimationFrame(()=>drawTxModalChart()); }
 }
 
