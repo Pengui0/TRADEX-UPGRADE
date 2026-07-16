@@ -1,0 +1,126 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+:root {
+  --bg: #000000;
+  --card: #09090b;
+  --border: rgba(255, 255, 255, 0.12);
+  --border2: rgba(255, 255, 255, 0.25);
+  --accent: #ffffff;
+  --green: #00f099;
+  --red: #ff3b5c;
+  --yellow: #f59e0b;
+  --text: #ffffff;
+  --text2: #a1a1aa;
+  --text3: #27272a;
+}
+
+html, body {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--text3);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text2);
+}
+
+/* Animations */
+@keyframes nebulaFade {
+  0% { opacity: 0.55; transform: scale(1); }
+  100% { opacity: 0.95; transform: scale(1.04); }
+}
+
+@keyframes starsFade {
+  from { opacity: 0.4; }
+  to { opacity: 1; }
+}
+
+@keyframes orbitFade {
+  from { opacity: 0.15; }
+  to { opacity: 0.65; }
+}
+
+@keyframes rotateSat {
+  from { transform: rotate(0deg) translateX(110px); }
+  to { transform: rotate(360deg) translateX(110px); }
+}
+
+@keyframes rotateSat2 {
+  from { transform: rotate(180deg) translateX(160px); }
+  to { transform: rotate(540deg) translateX(160px); }
+}
+
+@keyframes barFill {
+  0% { width: 0%; }
+  100% { width: 100%; }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+@keyframes tickScroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+@keyframes priceUp {
+  0% { background-color: rgba(0, 229, 153, 0.2); }
+  100% { background-color: transparent; }
+}
+
+@keyframes priceDown {
+  0% { background-color: rgba(255, 77, 102, 0.2); }
+  100% { background-color: transparent; }
+}
+
+/* Flash Animations */
+.flash-up {
+  animation: priceUp 0.8s ease-out;
+}
+.flash-down {
+  animation: priceDown 0.8s ease-out;
+}
+
+/* Custom Helpers */
+.glass-panel {
+  background: rgba(9, 9, 17, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+}
+
+/* Custom Comet Canvas background layer */
+#comet-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
